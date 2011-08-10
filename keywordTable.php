@@ -9,9 +9,12 @@ include_once( INSTALL_PATH . "/Keyword.class.php" );
 
 
 $weekofdays = array( "月", "火", "水", "木", "金", "土", "日", "なし" );
+$prgtimes = array();
+for( $i=0 ; $i < 25; $i++ ) {
+	$prgtimes[$i] = $i == 24 ? "なし" : $i."時～";
+}
 
 // 新規キーワードがポストされた
-
 
 if( isset($_POST["add_keyword"]) ) {
 	if( $_POST["add_keyword"] == 1 ) {
@@ -23,6 +26,7 @@ if( isset($_POST["add_keyword"]) ) {
 			$rec->channel_id = $_POST['k_station'];
 			$rec->use_regexp = $_POST['k_use_regexp'];
 			$rec->weekofday = $_POST['k_weekofday'];
+			$rec->prgtime   = $_POST['k_prgtime'];
 			$rec->autorec_mode = $_POST['autorec_mode'];
 			
 			// 録画予約実行
@@ -59,6 +63,8 @@ try {
 		$arr['use_regexp'] = $rec->use_regexp;
 		
 		$arr['weekofday'] = $weekofdays["$rec->weekofday"];
+		
+		$arr['prgtime'] = $prgtimes["$rec->prgtime"];
 		
 		$arr['autorec_mode'] = $RECORD_MODE[(int)$rec->autorec_mode]['name'];
 		

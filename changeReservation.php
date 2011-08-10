@@ -27,6 +27,7 @@ try {
 	
 	if( isset( $_POST['title'] ) ) {
 		$rec->title = trim( $_POST['title'] );
+		$rec->dirty = 1;
 		if( ($dbh !== false) && ($rec->complete == 1) ) {
 			$title = trim( mysql_real_escape_string($_POST['title']));
 			$title .= "(".date("Y/m/d", toTimestamp($rec->starttime)).")";
@@ -37,6 +38,7 @@ try {
 	
 	if( isset( $_POST['description'] ) ) {
 		$rec->description = trim( $_POST['description'] );
+		$rec->dirty = 1;
 		if( ($dbh !== false) && ($rec->complete == 1) ) {
 			$desc = "dc:description=".trim( mysql_real_escape_string($_POST['description']));
 			$desc .= "&epgrec:id=".$reserve_id;

@@ -60,7 +60,8 @@ try{
 		$category_id,
 		$program_id,
 		0,		// 自動録画
-		$mode	// 録画モード
+		$mode,	// 録画モード
+		1		// ダーティフラグ
 	);
 }
 catch( Exception $e ) {

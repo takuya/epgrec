@@ -122,6 +122,9 @@ class Settings extends SimpleXMLElement {
 			// キーワード自動録画の録画モード
 			$xml->autorec_mode = 0;
 			
+			// CS録画
+			$xml->cs_rec_flg = 0;
+			
 			$xml->save();
 			
 			return $xml;

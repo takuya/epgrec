@@ -18,33 +18,45 @@ $dbh = @mysql_connect( $settings->db_host, $settings->db_user, $settings->db_pas
 // $options = "WHERE complete='1'";
 $options = "WHERE starttime < '". date("Y-m-d H:i:s")."'";	// ながら再生は無理っぽい？
 
-if(isset( $_GET['key']) ) {
-	$options .= " AND autorec ='".mysql_real_escape_string(trim($_GET['key']))."'";
+if(isset( $_REQUEST['key']) ) {
+	$options .= " AND autorec ='".mysql_real_escape_string(trim($_REQUEST['key']))."'";
 }
 
-if(isset( $_POST['do_search'] )) {
-	if( isset($_POST['search'])){
-		if( $_POST['search'] != "" ) {
-			$search = $_POST['search'];
-			 $options .= " AND CONCAT(title,description) like '%".mysql_real_escape_string($_POST['search'])."%'";
+if(isset( $_REQUEST['do_search'] )) {
+	if( isset($_REQUEST['search'])){
+		if( $_REQUEST['search'] != "" ) {
+			$search = $_REQUEST['search'];
+			 $options .= " AND CONCAT(title,description) like '%".mysql_real_escape_string($_REQUEST['search'])."%'";
 		}
 	}
-	if( isset($_POST['category_id'])) {
-		if( $_POST['category_id'] != 0 ) {
-			$category_id = $_POST['category_id'];
-			$options .= " AND category_id = '".$_POST['category_id']."'";
+	if( isset($_REQUEST['category_id'])) {
+		if( $_REQUEST['category_id'] != 0 ) {
+			$category_id = $_REQUEST['category_id'];
+			$options .= " AND category_id = '".$_REQUEST['category_id']."'";
 		}
 	}
-	if( isset($_POST['station'])) {
-		if( $_POST['station'] != 0 ) {
-			$station = $_POST['station'];
-			$options .= " AND channel_id = '".$_POST['station']."'";
+	if( isset($_REQUEST['station'])) {
+		if( $_REQUEST['station'] != 0 ) {
+			$station = $_REQUEST['station'];
+			$options .= " AND channel_id = '".$_REQUEST['station']."'";
 		}
 	}
 }
 
 
 $options .= " ORDER BY starttime DESC";
+if( isset($_REQUEST['limit'])) {
+	if( $_REQUEST['limit'] != 0 ) {
+			$limit = (int)$_REQUEST['limit'];
+			$options .= " LIMIT {$limit}";
+		}
+}
+if( isset($_REQUEST['offset'])) {
+	if( $_REQUEST['offset'] != 0 ) {
+			$offset = (int)$_REQUEST['offset'];
+			$options .= " OFFSET {$offset}";
+		}
+}
 
 try{
 	$rvs = DBRecord::createRecords(RESERVE_TBL, $options );
@@ -60,7 +72,7 @@ try{
 		$arr['asf'] = "".$settings->install_url."/viewer.php?reserve_id=".$r->id;
 		$arr['title'] = htmlspecialchars($r->title,ENT_QUOTES);
 		$arr['description'] = htmlspecialchars($r->description,ENT_QUOTES);
-		$arr['thumb'] = "<img src=\"".$settings->install_url.$settings->thumbs."/".$r->path.".jpg\" />";
+		$arr['thumb'] = "<img src=\"".$settings->install_url.$settings->thumbs."/".htmlentities($r->path, ENT_QUOTES,"UTF-8").".jpg\" />";
 		$arr['cat'] = $cat->name_en;
 		$arr['mode'] = $RECORD_MODE[$r->mode]['name'];
 		
@@ -102,6 +114,13 @@ try{
 	$smarty->assign( "cats", $cats );
 	$smarty->assign( "use_thumbs", $settings->use_thumbs );
 	
+	//limit/offset
+	if(isset($limit)&& isset($offset)){
+		$smarty->assign( "limit",$limit);
+		$smarty->assign( "offset",$offset);
+	}
+
+
 	$smarty->display("recordedTable.html");
 	
 	

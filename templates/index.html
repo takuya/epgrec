@@ -79,28 +79,88 @@
 		);
 	}
 	var PRG = {
-		chdialog:function(disc){
+		chdialog:function(chash){
 			$('#channelDialog').dialog('close');
-			$.get('channelInfo.php', { channel_disc: disc },function(data) {
-				if(data.match(/^error/i)){
-					alert(data);
-				}
-				else {
-					var str = data;
-					str += '<div style="margin:2em 0 1em 0;text-align:center;"><a href="javascript:PRG.chupdate()" class="ui-state-default ui-corner-all ui-dialog-buttonpane button">更新</a></div>';
-					$('#channelDialog').html(str);
-					$('#channelDialog').dialog('open', 'center');
-					
-				}
-			});
+			var skip = $('#ch_title_'+chash+' .ch_skip').html();
+			var st_name = $('#ch_title_'+chash+' .ch_name').html();
+			var sid = $('#ch_title_'+chash+' .ch_sid').html();
+			var disc = $('#ch_title_'+chash+' .ch_disc').html();
 
+			var str = '<div class="prg_title">';
+			str += st_name;
+			str += '</div>';
+			str += '<form method="post" action="setChannelInfo.php">';
+			// スキップ
+			str += '<div class="prg_channel"><span class="labelLeft">視聴しない：</span>';
+			str += '<span>';
+			if( skip == 1 ) {
+				str += '<input type="checkbox" name="n_skip_name" id="id_ch_skip" value="'+skip+'" checked />';
+			}
+			else {
+				str += '<input type="checkbox" name="n_skip_name" id="id_ch_skip" value="'+skip+'" />';
+			}
+			str += '</span></div>';
+			// サービスID
+			str += '<div class="prg_channel"><span class="labelLeft">サービスID：</span>';
+			str += '<span><input type="text" name="n_sid" size="20" id="id_sid" value="';
+			str += sid;
+			str += '" /></span></div>';
+
+			str += '<input type="hidden" name="n_channel_disc" id="id_disc" value="';
+			str += disc;
+			str += '" />';
+			str += '<input type="hidden" name="n_channel_hash" id="id_hash" value="';
+			str += chash;
+			str += '" />';
+
+
+			str += '</form>';
+			
+			str += '<div style="margin:2em 0 1em 0;text-align:center;"><a href="javascript:PRG.chupdate()" class="ui-state-default ui-corner-all ui-dialog-buttonpane button">更新</a></div>';
+			
+			$('#channelDialog').html(str);
+			$('#channelDialog').dialog('open', 'center');
 		},
 		chupdate:function() {
 			var v_sid = $('#id_sid').val();
 			var v_channel_disc = $('#id_disc').val();
-			$.post('channelSetSID.php', { channel_disc: v_channel_disc,
-						      sid: v_sid }, function(data) {
-				
+			var v_hash = $('#id_hash').val();
+			var v_skip = $('#id_ch_skip').attr('checked');
+			var n_skip = v_skip ? 1 : 0;
+
+			$.post('setChannelInfo.php', { channel_disc: v_channel_disc,
+						      sid: v_sid,
+						      skip: n_skip
+						    }, function(data) {
+				if(data.match(/^error/i)){
+					alert(data);
+				}
+				else {
+					var old_skip = $('#ch_title_'+v_hash+' .ch_skip').html();
+					if( old_skip != n_skip ) {
+						if( v_skip ) {
+							(INISet.num_ch)--;
+							$('#ch_title_'+v_hash ).addClass('ch_title_skip');
+							$('#tv_chs_'+v_hash ).addClass('ch_set_skip');
+							$('#ch_title_str_'+v_hash ).addClass('ch_skip_color');
+							$('#ch_title_'+v_hash+' .ch_skip').html('1');
+						}
+						else {
+							(INISet.num_ch)++;
+							$('#ch_title_'+v_hash ).removeClass('ch_title_skip');
+							$('#tv_chs_'+v_hash ).removeClass('ch_set_skip');
+							$('#ch_title_str_'+v_hash ).removeClass('ch_skip_color');
+							$('#ch_title_'+v_hash+' .ch_skip').html('0');
+						}
+						if( PRG.F_Skip == 1 ) {
+							PRG.chSkipHide();
+						}
+						else {
+							$('#ch_title_bar div.ch_title_skip').show();
+							$('#tv_chs div.ch_set_skip').show();
+						}
+					}
+				}
 				$('#channelDialog').dialog('close');
 			});
 		},
@@ -189,6 +249,35 @@
 					$('#floatBox4Dialog').dialog('close');
 				}
 			});
+		},
+		F_Skip: 1,
+		chSkipShow:function() {
+			$('#float_titles').width(INISet.num_all_ch * INISet.ch_width + 80);
+			$('#tv_chs').width(INISet.num_all_ch * INISet.ch_width );
+			$('#tvtimes2').css( { left: INISet.num_all_ch * INISet.ch_width  + 40 } ).show();
+			tvtimes_scroll();
+			$('#ch_title_bar div.ch_title_skip').show();
+			$('#tv_chs div.ch_set_skip').show();
+			nowBar.INI();
+		},
+		chSkipHide:function() {
+			$('#ch_title_bar div.ch_title_skip').hide();
+			$('#tv_chs div.ch_set_skip').hide();
+			$('#float_titles').width( INISet.num_ch * INISet.ch_width + 80 );
+			$('#tv_chs').width( INISet.num_ch * INISet.ch_width );
+			$('#tvtimes2').css( { left: INISet.num_ch * INISet.ch_width  + 40 }).show();
+			tvtimes_scroll();
+			nowBar.INI();
+		},
+		toggle:function() {
+			if( this.F_Skip ) {
+				this.chSkipShow();
+				this.F_Skip = 0;
+			}
+			else {
+				this.chSkipHide();
+				this.F_Skip = 1;
+			}
 		}
 	}
 	var CTG = {
@@ -316,8 +405,10 @@
 		DG.dialog('close');
 
 		var DG2 = $('#channelDialog');
-		DG2.dialog({title:'チャンネル情報',width:600});
+		DG2.dialog({title:'チャンネル情報',width:480});
 		DG2.dialog('close');
+
+//		PRG.toggle();
 
 		nowBar.INI();
 		CTG.INI();
@@ -368,10 +459,20 @@ h2 {padding: 4px}
 #tvtable div.tvtimetop {padding:8px 0px;}
 
 #tvtable div.ch_set {width:{/literal}{$ch_set_width}{literal}px;float:left;background-color:#BBB;}
+.ch_set_skip { display: none; }
 
 
 #tvtable div.ch_title, #tvtable div.prg {margin-right:2px;}
 #tvtable div.ch_title {padding:8px 0px;background-color:#333;color:#DDD;font-weight:bold;text-align:center}
+.ch_title_skip { display: none;}
+.ch_skip_color { color: red;}
+
+.ch_disc {display :none;}
+.ch_skip {display :none;}
+.ch_sid  {display :none;}
+.ch_name {display :none;}
+.ch_hash {display :none;}
+
 #tvtable div.prg {
 	overflow:hidden;
 	color:#444;
@@ -411,6 +512,7 @@ h2 {padding: 4px}
 #float_titles { z-index:100}
 #float_titles div.ch_title {width:{/literal}{$ch_set_width}{literal}px;float:left;color:#FFF;font-weight:bold;text-align:center}
 #float_titles div.ch_title div{padding:8px 0px;margin:0 6px 0 4px;background-image: url(imgs/trancBG50.png);}
+
 
 #float_follows {position:absolute;}
 #prg_info {
@@ -453,7 +555,7 @@ h2 {padding: 4px}
 <h2>{$sitetitle}</h2>
 
 
-<div id="float_titles" style="width: {math equation="x + 80" x=$chs_width}px;height:120px;">
+<div id="float_titles" style="width: {math equation="x + 80" x=$chs_width }px;height:120px;">
 <div id="float_follows">
 
 <div class="set">
@@ -490,13 +592,18 @@ h2 {padding: 4px}
     {/foreach}
   </ul><br style="clear:left;" />
  </div>
+ 
+ <div class="set">
+   <ul><li><a class="jump" href="javascript:PRG.toggle()">チャンネル表示</a></li></ul>
+ </div>
+
  <br style="clear:left;" />
 
  <div class="set">
   <ul>
     <li><a href="programTable.php">番組検索</a></li>
     <li><a href="reservationTable.php">録画予約一覧</a></li>
-    <li><a href="recordedTable.php">録画済一覧</a></li>
+    <li><a href="recordedTable.php?limit=10">録画済一覧</a></li>
   </ul>
  </div>
 
@@ -515,12 +622,22 @@ h2 {padding: 4px}
 <div id="prg_info"><div class="dummy">test</div></div>
 </div>
 
-<div style="position:absolute;bottom:0;">
+
+<!-- チャンネル局名 -->
+<div id="ch_title_bar" style="position:absolute;bottom:0;">
   <div class="tvtimeDM" style="float:left;">&nbsp;</div>
   {foreach from=$programs item=program }
-  <div class="ch_title" ><div style="cursor: pointer" onClick="javascript:PRG.chdialog('{$program.channel_disc}')" >{$program.station_name}</div></div>
+  <div id="ch_title_{$program.ch_hash}"  class="ch_title{if $program.skip == 1 } ch_title_skip{/if}" >
+    <div class="ch_hash">{$program.ch_hash}</div>
+    <div class="ch_disc">{$program.channel_disc}</div>
+    <div class="ch_skip">{$program.skip}</div>
+    <div class="ch_sid">{$program.sid}</div>
+    <div class="ch_name">{$program.station_name}</div>
+    <div id="ch_title_str_{$program.ch_hash}" {if $program.skip == 1 }class="ch_skip_color" {/if} style="cursor: pointer;" onClick="javascript:PRG.chdialog('{$program.ch_hash}')" >{$program.station_name}</div>
+  </div>
   {/foreach}
 </div>
+
 <br style="clear:left;" />
 <div id="prg_info"><div class="dummy">&nbsp;</div></div>
 </div>
@@ -538,8 +655,8 @@ h2 {padding: 4px}
 
 <div id="tv_chs" style="width: {$chs_width}px" >
    {foreach from=$programs item=program }
-   <div class="ch_set" style="width: {$ch_set_width}px" >
-    <div class="ch_programs">
+   <div id="tv_chs_{$program.ch_hash}" class="ch_set{if $program.skip == 1 } ch_set_skip{/if}" >
+    <div class="ch_programs" >
     {foreach from=$program.list item=item }
       <div {if $item.id}id="prgID_{$item.id}"{/if} class="prg {if ! $item.id}prg_none {/if} ctg_{$item.category_name}{if $item.rec gt 0 } prg_rec{/if}" style="height:{$item.height}px;">
         <div class="prg_dummy">
@@ -573,12 +690,17 @@ h2 {padding: 4px}
 {literal}
 <script type="text/javascript">
 var INISet = {
+{/literal}
 	prgRecordURL : 'simpleReservation.php',		// 簡易予約
 	prgRecordPlusURL : 'recordp.php',		// 詳細予約
 	prgCancelURL : 'cancelReservation.php',		// 予約キャンセル
-	dotMin : {/literal}{$height_per_min}{literal},
-	tableStartTime : {/literal}'{$top_time}',
-	tableEndTime : '{$last_time}'{literal}
+	dotMin : {$height_per_min},
+	tableStartTime : '{$top_time}',
+	tableEndTime : '{$last_time}',
+	ch_width : {$ch_set_width},
+	num_ch : {$num_ch},
+	num_all_ch : {$num_all_ch}
+{literal}
 }
 </script>
 {/literal}

@@ -22,7 +22,10 @@ else if(isset($_GET['reserve_id'])) {
 			if( $_GET['delete_file'] == 1 ) {
 				// ファイルを削除
 				if( file_exists( INSTALL_PATH."/".$settings->spool."/".$rec->path ) ) {
-					@unlink(INSTALL_PATH."/".$settings->spool."/".$rec->path);
+					@exec('rm  "'.INSTALL_PATH.'/'.$settings->spool.'/'.$rec->path.'" > /dev/null &');
+					@exec('rm  "'.INSTALL_PATH.'/'.$settings->thumbs.'/'.$rec->path.'.jpg" > /dev/null &');
+					#@unlink(INSTALL_PATH."/".$settings->spool."/".$rec->path);
+					#@unlink(INSTALL_PATH."/".$settings->thumbs."/".$rec->path.".jpg");
 				}
 			}
 		}

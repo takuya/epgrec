@@ -87,6 +87,7 @@ table#reservation_table tr.prg_rec  {background-color: #F55;color:#FEE}
   <th>局</th>
   <th>カテゴリ</th>
   <th>曜日</th>
+  <th>開始時</ht>
   <th>録画モード</th>
   <th>削除</th>
  </tr>
@@ -100,6 +101,7 @@ table#reservation_table tr.prg_rec  {background-color: #F55;color:#FEE}
   <td>{$keyword.channel}</td>
   <td>{$keyword.category}</td>
   <td>{$keyword.weekofday}</td>
+  <td>{$keyword.prgtime}</td>
   <td>{$keyword.autorec_mode}</td>
   <td><input type="button" value="削除" onClick="javascript:PRG.delkey('{$keyword.id}')" /></td>
  </tr>

@@ -37,31 +37,36 @@ if( isset( $_GET['time'] ) ) {
 }
 $last_time = $top_time + 3600 * $program_length;
 
- // 時刻欄
- for( $i = 0 ; $i < $program_length; $i++ ) {
+// 時刻欄
+for( $i = 0 ; $i < $program_length; $i++ ) {
 	$tvtimes[$i] = date("H", $top_time + 3600 * $i );
- }
- 
- 
- // 番組表
- $programs = array();
- if( $type == "BS" ) $channel_map = $BS_CHANNEL_MAP;
- else if( $type == "GR" ) $channel_map = $GR_CHANNEL_MAP;
- else if( $type == "CS" ) $channel_map = $CS_CHANNEL_MAP;
- $st = 0;
- $prec = null;
- try {
- 	$prec = new DBRecord(PROGRAM_TBL);
- }
- catch( Exception $e ) {
+}
+
+
+// 番組表
+$programs = array();
+if( $type == "BS" ) $channel_map = $BS_CHANNEL_MAP;
+else if( $type == "GR" ) $channel_map = $GR_CHANNEL_MAP;
+else if( $type == "CS" ) $channel_map = $CS_CHANNEL_MAP;
+$st = 0;
+$prec = null;
+try {
+	$prec = new DBRecord(PROGRAM_TBL);
+}
+catch( Exception $e ) {
 	exit('プログラムテーブルが存在しないようです。インストールをやり直してください.');
- }
- foreach( $channel_map as $channel_disc => $channel ) {
+}
+$num_ch = 0;
+foreach( $channel_map as $channel_disc => $channel ) {
 	$prev_end = $top_time;
  	try {
 		$crec = new DBRecord( CHANNEL_TBL, "channel_disc", $channel_disc );
+		$programs[$st]["skip"] = $crec->skip;
+		if( $crec->skip == 0 ) $num_ch++;
+		$programs[$st]["channel_disc"] = $channel_disc;
 		$programs[$st]["station_name"]  = $crec->name;
-		$programs[$st]["channel_disc"]  = $crec->channel_disc;
+		$programs[$st]["sid"] = $crec->sid;
+		$programs[$st]["ch_hash"] = md5($channel_disc);
 		
 		$reca = $prec->fetch_array( "channel_disc", $channel_disc,
 		                                  "endtime > '".toDatetime($top_time)."' ".
@@ -126,36 +131,35 @@ $last_time = $top_time + 3600 * $program_length;
 		$num++;
  	}
 	$st++;
- }
- $prec = null;
+}
+$prec = null;
  
- // 局の幅
- $ch_set_width = $settings->ch_set_width;
- // 全体の幅
- $chs_width = $ch_set_width * count( $channel_map );
- 
- // GETパラメタ
-  $get_param = $_SERVER['SCRIPT_NAME'] . "?type=".$type."&length=".$program_length."";
- 
- $smarty = new Smarty();
- 
- // カテゴリ一覧
- $crec = DBRecord::createRecords( CATEGORY_TBL );
- $cats = array();
- $num = 0;
- foreach( $crec as $val ) {
+// 局の幅
+$ch_set_width = (int)($settings->ch_set_width);
+// 全体の幅
+$chs_width = $ch_set_width * $num_ch;
+
+// GETパラメタ
+$get_param = $_SERVER['SCRIPT_NAME'] . "?type=".$type."&length=".$program_length."";
+
+$smarty = new Smarty();
+
+// カテゴリ一覧
+$crec = DBRecord::createRecords( CATEGORY_TBL );
+$cats = array();
+$num = 0;
+foreach( $crec as $val ) {
 	$cats[$num]['name_en'] = $val->name_en;
 	$cats[$num]['name_jp'] = $val->name_jp;
 	$num++;
- }
- $smarty->assign( "cats", $cats );
- 
+}
+$smarty->assign( "cats", $cats );
 
 
- // タイプ選択
- $types = array();
- $i = 0;
- if( $settings->bs_tuners != 0 ) {
+// タイプ選択
+$types = array();
+$i = 0;
+if( $settings->bs_tuners != 0 ) {
 	$types[$i]['selected'] = $type == "BS" ? 'class="selected"' : "";
 	$types[$i]['link'] = $_SERVER['SCRIPT_NAME'] . "?type=BS&length=".$program_length."&time=".date( "YmdH", $top_time);
 	$types[$i]['name'] = "BS";
@@ -168,65 +172,67 @@ $last_time = $top_time + 3600 * $program_length;
 		$types[$i]['name'] = "CS";
 		$i++;
 	}
- }
- if( $settings->gr_tuners != 0 ) {
+}
+if( $settings->gr_tuners != 0 ) {
 	$types[$i]['selected'] = $type == "GR" ? 'class="selected"' : "";
 	$types[$i]['link'] = $_SERVER['SCRIPT_NAME'] . "?type=GR&length=".$program_length."&time=".date( "YmdH", $top_time);
 	$types[$i]['name'] = "地上デジタル";
 	$i++;
- }
- $smarty->assign( "types", $types );
- 
- // 日付選択
- $days = array();
- $day = array();
- $day['d'] = "昨日";
- $day['link'] = $get_param . "&time=". date( "YmdH", time() - 3600 *24 );
- $day['ofweek'] = "";
- $day['selected'] = $top_time < mktime( 0, 0 , 0) ? 'class="selected"' : '';
- 
- array_push( $days , $day );
- $day['d'] = "現在";
- $day['link'] = $get_param;
- $day['ofweek'] = "";
- $day['selected'] = "";
- array_push( $days, $day );
- for( $i = 0 ; $i < 8 ; $i++ ) {
+}
+$smarty->assign( "types", $types );
+
+// 日付選択
+$days = array();
+$day = array();
+$day['d'] = "昨日";
+$day['link'] = $get_param . "&time=". date( "YmdH", time() - 3600 *24 );
+$day['ofweek'] = "";
+$day['selected'] = $top_time < mktime( 0, 0 , 0) ? 'class="selected"' : '';
+
+array_push( $days , $day );
+$day['d'] = "現在";
+$day['link'] = $get_param;
+$day['ofweek'] = "";
+$day['selected'] = "";
+array_push( $days, $day );
+for( $i = 0 ; $i < 8 ; $i++ ) {
 	$day['d'] = "".date("d", time() + 24 * 3600 * $i ) . "日";
 	$day['link'] = $get_param . "&time=".date( "Ymd", time() + 24 * 3600 * $i) . date("H" , $top_time );
 	$day['ofweek'] = $DAY_OF_WEEK[(int)date( "w", time() + 24 * 3600 * $i )];
 	$day['selected'] = date("d", $top_time) == date("d", time() + 24 * 3600 * $i ) ? 'class="selected"' : '';
 	array_push( $days, $day );
- }
- $smarty->assign( "days" , $days );
- 
- // 時間選択
- $toptimes = array();
- for( $i = 0 ; $i < 24; $i+=4 ) {
+}
+$smarty->assign( "days" , $days );
+
+// 時間選択
+$toptimes = array();
+for( $i = 0 ; $i < 24; $i+=4 ) {
 	$tmp = array();
 	$tmp['hour'] = sprintf( "%02d:00", $i );
 	$tmp['link'] = $get_param . "&time=".date("Ymd", $top_time ) . sprintf("%02d", $i );
 	array_push( $toptimes, $tmp );
- }
- $smarty->assign( "toptimes" , $toptimes );
- 
- $smarty->assign( "tvtimes", $tvtimes );
- $smarty->assign( "programs", $programs );
- $smarty->assign( "ch_set_width", $settings->ch_set_width );
- $smarty->assign( "chs_width", $chs_width );
- $smarty->assign( "height_per_hour", $settings->height_per_hour );
- $smarty->assign( "height_per_min", $settings->height_per_hour / 60 );
+}
+$smarty->assign( "toptimes" , $toptimes );
+
+$smarty->assign( "tvtimes", $tvtimes );
+$smarty->assign( "programs", $programs );
+$smarty->assign( "ch_set_width", (int)($settings->ch_set_width) );
+$smarty->assign( "chs_width", $chs_width );
+$smarty->assign( "height_per_hour", $settings->height_per_hour );
+$smarty->assign( "height_per_min", $settings->height_per_hour / 60 );
+$smarty->assign( "num_ch", $num_ch );
+$smarty->assign( "num_all_ch" , count( $channel_map ) );
 
 // date("Y-m-d H:i:s", $timestamp);
- 
- $sitetitle = date( "Y", $top_time ) . "年" . date( "m", $top_time ) . "月" . date( "d", $top_time ) . "日". date( "H", $top_time ) .
+
+$sitetitle = date( "Y", $top_time ) . "年" . date( "m", $top_time ) . "月" . date( "d", $top_time ) . "日". date( "H", $top_time ) .
               "時～".( $type == "GR" ? "地上デジタル" : "BSデジタル" )."番組表";
- 
- $smarty->assign("sitetitle", $sitetitle );
- 
- $smarty->assign("top_time", str_replace( "-", "/" ,toDatetime($top_time)) );
- $smarty->assign("last_time", str_replace( "-", "/" ,toDatetime($last_time)) );
- 
- 
- $smarty->display("index.html");
+
+$smarty->assign("sitetitle", $sitetitle );
+
+$smarty->assign("top_time", str_replace( "-", "/" ,toDatetime($top_time)) );
+$smarty->assign("last_time", str_replace( "-", "/" ,toDatetime($last_time)) );
+
+
+$smarty->display("index.html");
 ?>

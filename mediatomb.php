@@ -1,7 +1,8 @@
 #!/usr/bin/php
 <?php
-
-include_once('config.php');
+$script_path = dirname( __FILE__ );
+chdir( $script_path );
+include_once( $script_path . '/config.php');
 include_once(INSTALL_PATH.'/DBRecord.class.php');
 include_once(INSTALL_PATH.'/reclib.php');
 include_once(INSTALL_PATH.'/Settings.class.php');

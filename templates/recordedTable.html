@@ -18,8 +18,8 @@
 		dialog:function(id, title){
 			$('#floatBox4Dialog').dialog({title:'削除',width:500});
 			var str = '<div class="prg_title">' + title + 'を削除します</div>';
-			str += '<form><div style="text-align:center;">録画ファイルも削除する<input type="checkbox" id="delete_file" name="delete_file" value="1" /></div></form>';
-			str +='<div style="margin:2em 0 1em 0;text-align:center;"><a href="javascript:PRG.rec(' + id + ')" class="ui-state-default ui-corner-all ui-dialog-buttonpane button">この録画を本当に削除する</a></div>';
+			str += '<form><div style="text-align:center;">録画ファイルも削除する<input type="checkbox" id="delete_file" checked name="delete_file" value="1" /></div></form>';
+			str +='<div style="margin:2em 0 1em 0;text-align:center;"><a href="javascript:PRG.rec(' + id + ')" class="ui-state-default ui-corner-all ui-dialog-buttonpane button">この録画を削除する</a></div>';
 			$('#floatBox4Dialog').html(str);
 			$('#floatBox4Dialog').dialog('open', 'center');
 		},
@@ -143,11 +143,25 @@ table#reservation_table tr.ctg_10, #category_select a.ctg_10 {background-color: 
 <h2>{$sitetitle}</h2>
 
 <p><a href="index.php">番組表に戻る</a></p>
+<p>キーワード録画</p>
+<!--TODO ::ここを録画キーワードにする-->
+<p style="font-size:20px;">
+<div style="display:inline-block"><a href="./recordedTable.php?do_search=1&search=%E3%81%8D%E3%82%87%E3%81%86%E3%81%AE%E6%96%99%E7%90%86%E3%80%80">きょうの料理</a></div>
+<div style="display:inline-block"><a href="./recordedTable.php?do_search=1&search=きょうの料理ビギナーズ">きょうの料理ビギナーズ</a></div>
+<div style="display:inline-block"><a href="./recordedTable.php?do_search=1&search=テストの花道">テストの花道</a></div>
+<div style="display:inline-block"><a href="./recordedTable.php?do_search=1&search=アインシュタイン">アインシュタインの眼</a></div>
+<div style="display:inline-block"><a href="./recordedTable.php?do_search=1&search=２３５５">２３５５</a></div>
+<div style="display:inline-block"><a href="./recordedTable.php?do_search=1&search=０６５５">０６５５</a></div>
+<div style="display:inline-block"><a href="./recordedTable.php?do_search=1&search=大科学実験">大科学実験</a></div>
+<div style="display:inline-block"><a href="./recordedTable.php?do_search=1&search=美の壺">美の壺</a></div>
+<div style="display:inline-block"><a href="./recordedTable.php?do_search=1&search=">すべて</a></div>
+</p>
 
 <div>
 絞り込み：
-<form method="post" action="recordedTable.php" >
+<form method="get" action="recordedTable.php" >
 <input type="hidden" name="do_search" value="1" />
+<!--TODO ::この条件に日付を追加する -->
 検索語句<input type="text" size="20" name="search" value="{$search}" />
 局<select name="station">
   {foreach from=$stations item=st}
@@ -168,24 +182,24 @@ table#reservation_table tr.ctg_10, #category_select a.ctg_10 {background-color: 
 <table id="reservation_table">
  <tr>
   <th>録画日時</th>
-  <th>ch</th>
-  <th>モード</th>
+  <!--<th>ch</th>-->
+  <!--<th>モード</th> -->
   {if $use_thumbs == 1}<th>サムネール</th>{/if}
-  <th>タイトル</th>
+  <th style="width:300px;text-align:right;">タイトル</th>
   <th>内容</th>
-  <th>変更</th>
+  <!--<th>変更</th> -->
   <th>削除</th>
  </tr>
 
 {foreach from=$records item=rec }
  <tr id="resid_{$rec.id}" class="ctg_{$rec.cat}">
   <td>{$rec.starttime}</td>
-  <td>{$rec.station_name}</td>
-  <td>{$rec.mode}</td>
+  <!--<td>{$rec.station_name}</td>-->
+  <!--<td>{$rec.mode}</td>-->
   {if $use_thumbs == 1}<td><a href="{$rec.asf}">{$rec.thumb}</a></td>{/if}
-  <td><a href="{$rec.asf}" id="tid_{$rec.id}">{$rec.title}</a></td>
-  <td><a href="{$rec.asf}" id="did_{$rec.id}">{$rec.description}</a></td>
-  <td><input type="button" value="変更" onClick="javascript:PRG.editdialog('{$rec.id}')" /></td>
+  <td style="text-align:left;"><a href="{$rec.asf}" id="tid_{$rec.id}">{$rec.title}</a></td>
+  <td style="text-align:left;"><a href="{$rec.asf}" id="did_{$rec.id}">{$rec.description}</a></td>
+  <!-- <td><input type="button" value="変更" onClick="javascript:PRG.editdialog('{$rec.id}')" /></td> -->
   <td><input type="button" value="削除" onClick="javascript:PRG.dialog('{$rec.id}','{$rec.title}')" /></td>
  </tr>
 {/foreach}

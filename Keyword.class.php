@@ -4,6 +4,7 @@ include_once( INSTALL_PATH . "/DBRecord.class.php" );
 include_once( INSTALL_PATH . "/reclib.php" );
 include_once( INSTALL_PATH . "/Reservation.class.php" );
 include_once( INSTALL_PATH . '/Settings.class.php' );
+include_once( INSTALL_PATH . '/recLog.inc.php' );
 
 class Keyword extends DBRecord {
 	
@@ -16,38 +17,67 @@ class Keyword extends DBRecord {
 		}
 	}
 	
-	private function getPrograms() {
-		if( $this->id == 0 ) return false;
+	static public function search(  $keyword = "", 
+									$use_regexp = false,
+									$type = "*", 
+									$category_id = 0,
+									$channel_id = 0,
+									$weekofday = 7,
+									$prgtime = 24,
+									$limit = 300 ) {
+		$sts = Settings::factory();
+		
+		$dbh = @mysql_connect($sts->db_host, $sts->db_user, $sts->db_pass );
 		
 		// ちょっと先を検索する
-		$options = " WHERE starttime > '".date("Y-m-d H:i:s", time() + $this->settings->padding_time + 120 )."'";
+		$options = " WHERE starttime > '".date("Y-m-d H:i:s", time() + $sts->padding_time + 60 )."'";
 		
-		if( $this->keyword != "" ) {
-			if( $this->use_regexp ) {
-				$options .= " AND CONCAT(title,description) REGEXP '".mysql_real_escape_string($this->keyword)."'";
+		if( $keyword != "" ) {
+			if( $use_regexp ) {
+				$options .= " AND CONCAT(title,description) REGEXP '".mysql_real_escape_string($keyword)."'";
 			}
 			else {
-				$options .= " AND CONCAT(title,description) like '%".mysql_real_escape_string($this->keyword)."%'";
+				// 全角半角
+				// 場当たり的に対応
+				$f_zennum = preg_match('/[0-9]/u', $keyword );
+				$f_zenal  = preg_match('/[a-zA-Z]/u', $keyword );
+				
+				$options .= " AND ( CONCAT(title,' ',description) like '%".mysql_real_escape_string($keyword)."%'";
+				
+				if( $f_zennum ) {
+					$options .= " OR CONCAT(title,' ',description) like '%".mysql_real_escape_string(mb_convert_kana( $keyword, 'KVN',"UTF-8" ))."%'";
+				}
+				if( $f_zenal ) {
+					$options .= " OR CONCAT(title,' ',description) like '%".mysql_real_escape_string(mb_convert_kana( $keyword, 'KVR', "UTF-8" ))."%'";
+				}
+				if( $f_zenal && $f_zennum ) {
+					$options .= " OR CONCAT(title,' ',description) like '%".mysql_real_escape_string(mb_convert_kana( $keyword, 'KVRN', "UTF-8" ))."%'";
+				}
+				$options .= ") ";
 			}
 		}
 		
-		if( $this->type != "*" ) {
-			$options .= " AND type = '".$this->type."'";
+		if( $type != "*" ) {
+			$options .= " AND type = '".$type."'";
 		}
 		
-		if( $this->category_id != 0 ) {
-			$options .= " AND category_id = '".$this->category_id."'";
+		if( $category_id != 0 ) {
+			$options .= " AND category_id = '".$category_id."'";
 		}
 		
-		if( $this->channel_id != 0 ) {
-			$options .= " AND channel_id = '".$this->channel_id."'";
+		if( $channel_id != 0 ) {
+			$options .= " AND channel_id = '".$channel_id."'";
 		}
 		
-		if( $this->weekofday != 7 ) {
-			$options .= " AND WEEKDAY(starttime) = '".$this->weekofday."'";
+		if( $weekofday != 7 ) {
+			$options .= " AND WEEKDAY(starttime) = '".$weekofday."'";
 		}
 		
-		$options .= " ORDER BY starttime ASC";
+		if( $prgtime != 24 ) {
+			$options .= " AND time(starttime) BETWEEN cast('".sprintf( "%02d:00:00", $prgtime)."' as time) AND cast('".sprintf("%02d:59:59", $prgtime)."' as time)";
+		}
+		
+		$options .= " ORDER BY starttime ASC  LIMIT ".$limit ;
 		
 		$recs = array();
 		try {
@@ -56,10 +86,20 @@ class Keyword extends DBRecord {
 		catch( Exception $e ) {
 			throw $e;
 		}
-		
 		return $recs;
 	}
 	
+	private function getPrograms() {
+		if( $this->id == 0 ) return false;
+		$recs = array();
+		try {
+			 $recs = self::search( trim($this->keyword), $this->use_regexp, $this->type, $this->category_id, $this->channel_id, $this->weekofday, $this->prgtime );
+		}
+		catch( Exception $e ) {
+			throw $e;
+		}
+		return $recs;
+	}
 	
 	public function reservation() {
 		if( $this->id == 0 ) return;
@@ -71,22 +111,18 @@ class Keyword extends DBRecord {
 		catch( Exception $e ) {
 			throw $e;
 		}
-		if( count($precs) < 300 ) {
-			// 一気に録画予約
-			foreach( $precs as $rec ) {
-				try {
-					if( $rec->autorec ) {
-						Reservation::simple( $rec->id, $this->id, $this->autorec_mode );
-						usleep( 100 );		// あんまり時間を空けないのもどう?
-					}
-				}
-				catch( Exception $e ) {
-					// 無視
+		// 一気に録画予約
+		foreach( $precs as $rec ) {
+			try {
+				if( $rec->autorec ) {
+					Reservation::simple( $rec->id, $this->id, $this->autorec_mode );
+					reclog( "Keyword.class::キーワードID".$this->id."の録画が予約された");
+					usleep( 100 );		// あんまり時間を空けないのもどう?
 				}
 			}
-		}
-		else {
-			throw new Exception( "300件以上の自動録画は実行できません" );
+			catch( Exception $e ) {
+				// 無視
+			}
 		}
 	}
 	

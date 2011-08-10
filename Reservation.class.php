@@ -3,6 +3,7 @@ include_once('config.php');
 include_once( INSTALL_PATH . "/DBRecord.class.php" );
 include_once( INSTALL_PATH . "/reclib.php" );
 include_once( INSTALL_PATH . "/Settings.class.php" );
+include_once( INSTALL_PATH . "/recLog.inc.php" );
 
 
 // 予約クラス
@@ -42,7 +43,8 @@ class Reservation {
 		$category_id = 0,		// カテゴリID
 		$program_id = 0,		// 番組ID
 		$autorec = 0,			// 自動録画
-		$mode = 0				// 録画モード
+		$mode = 0,				// 録画モード
+		$dirty = 0				// ダーティフラグ
 	) {
 		global $RECORD_MODE;
 		$settings = Settings::factory();
@@ -77,9 +79,11 @@ class Reservation {
 			$crec = new DBRecord( CHANNEL_TBL, "id", $channel_id );
 			
 			// 既存予約数 = TUNER番号
-			$tuners = ($crec->type == "GR") ? $settings->gr_tuners : $settings->bs_tuners;
+			$tuners = ($crec->type == "GR") ? (int)($settings->gr_tuners) : (int)($settings->bs_tuners);
+			$type_str = ($crec->type == "GR") ? "type = 'GR' " : "(type = 'BS' OR type = 'CS') ";
+			
 			$battings = DBRecord::countRecords( RESERVE_TBL, "WHERE complete = '0' ".
-															  "AND type = '".$crec->type."' ".
+															  "AND ".$type_str.
 															  "AND starttime < '".toDatetime($end_time) ."' ".
 															  "AND endtime > '".toDatetime($rec_start)."'"
 			);
@@ -90,11 +94,11 @@ class Reservation {
 					// 解消可能な重複かどうかを調べる
 					// 前後の予約数
 					$nexts = DBRecord::countRecords( RESERVE_TBL, "WHERE complete = '0' ".
-																	"AND type = '".$crec->type."' ".
+																	"AND ".$type_str.
 																	"AND starttime = '".toDatetime($end_time - $settings->former_time)."'");
 					
 					$prevs = DBRecord::countRecords( RESERVE_TBL, "WHERE complete = '0' ".
-																"AND type = '".$crec->type."' ".
+																"AND ".$type_str.
 																"AND endtime = '".$starttime."'"  );
 					
 					// 前後を引いてもチューナー数と同数以上なら重複の解消は無理
@@ -111,7 +115,7 @@ class Reservation {
 					
 					// 直前の録画予約を見付ける
 					$trecs = DBRecord::createRecords(RESERVE_TBL, "WHERE complete = '0' ".
-																		 "AND type = '".$crec->type."' ".
+																		 "AND ".$type_str.
 																		 "AND endtime = '".$starttime."'" );
 					// 直前の番組をずらす
 					for( $i = 0; $i < count($trecs) ; $i++ ) {
@@ -127,6 +131,7 @@ class Reservation {
 						$prev_endtime      = $trecs[$i]->endtime;
 						$prev_autorec      = $trecs[$i]->autorec;
 						$prev_mode         = $trecs[$i]->mode;
+						$prev_dirty        = $trecs[$i]->dirty;
 						
 						$prev_start_time = toTimestamp($prev_starttime);
 						// 始まっていない予約？
@@ -150,7 +155,8 @@ class Reservation {
 									$prev_category_id,			// カテゴリID
 									$prev_program_id,			// 番組ID
 									$prev_autorec,				// 自動録画
-									$prev_mode );
+									$prev_mode,
+									$prev_dirty );
 							}
 							catch( Exception $e ) {
 								throw new Exception( "重複予約を解消できません" );
@@ -176,13 +182,12 @@ class Reservation {
 				throw new Exception( "終わりつつある/終わっている番組です" );
 			}
 			
-			
 			// ここからファイル名生成
 /*
 			%TITLE%	番組タイトル
 			%ST%	開始日時（ex.200907201830)
 			%ET%	終了日時
-			%TYPE%	GR/BS
+			%TYPE%	GR/BS/CS
 			%CH%	チャンネル番号
 			%DOW%	曜日（Sun-Mon）
 			%DOWJ%	曜日（日-土）
@@ -198,42 +203,43 @@ class Reservation {
 			$day_of_week = array( "日","月","火","水","木","金","土" );
 			$filename = $settings->filename_format;
 			
-			// あると面倒くさそうな文字を全部_に
-			$fn_title = mb_ereg_replace("[ \./\*:<>\?\\|()\'\"&]","_", trim($title) );
-			
 			// %TITLE%
-			$filename = str_replace("%TITLE%", $fn_title, $filename);
+			$filename = mb_str_replace("%TITLE%", trim($title), $filename);
 			// %ST%	開始日時
-			$filename = str_replace("%ST%",date("YmdHis", $start_time), $filename );
+			$filename = mb_str_replace("%ST%",date("YmdHis", $start_time), $filename );
 			// %ET%	終了日時
-			$filename = str_replace("%ET%",date("YmdHis", $end_time), $filename );
+			$filename = mb_str_replace("%ET%",date("YmdHis", $end_time), $filename );
 			// %TYPE%	GR/BS
-			$filename = str_replace("%TYPE%",$crec->type, $filename );
+			$filename = mb_str_replace("%TYPE%",$crec->type, $filename );
 			// %CH%	チャンネル番号
-			$filename = str_replace("%CH%","".$crec->channel, $filename );
+			$filename = mb_str_replace("%CH%","".$crec->channel, $filename );
 			// %DOW%	曜日（Sun-Mon）
-			$filename = str_replace("%DOW%",date("D", $start_time), $filename );
+			$filename = mb_str_replace("%DOW%",date("D", $start_time), $filename );
 			// %DOWJ%	曜日（日-土）
-			$filename = str_replace("%DOWJ%",$day_of_week[(int)date("w", $start_time)], $filename );
+			$filename = mb_str_replace("%DOWJ%",$day_of_week[(int)date("w", $start_time)], $filename );
 			// %YEAR%	開始年
-			$filename = str_replace("%YEAR%",date("Y", $start_time), $filename );
+			$filename = mb_str_replace("%YEAR%",date("Y", $start_time), $filename );
 			// %MONTH%	開始月
-			$filename = str_replace("%MONTH%",date("m", $start_time), $filename );
+			$filename = mb_str_replace("%MONTH%",date("m", $start_time), $filename );
 			// %DAY%	開始日
-			$filename = str_replace("%DAY%",date("d", $start_time), $filename );
+			$filename = mb_str_replace("%DAY%",date("d", $start_time), $filename );
 			// %HOUR%	開始時
-			$filename = str_replace("%HOUR%",date("H", $start_time), $filename );
+			$filename = mb_str_replace("%HOUR%",date("H", $start_time), $filename );
 			// %MIN%	開始分
-			$filename = str_replace("%MIN%",date("i", $start_time), $filename );
+			$filename = mb_str_replace("%MIN%",date("i", $start_time), $filename );
 			// %SEC%	開始秒
-			$filename = str_replace("%SEC%",date("s", $start_time), $filename );
+			$filename = mb_str_replace("%SEC%",date("s", $start_time), $filename );
 			// %DURATION%	録画時間（秒）
-			$filename = str_replace("%DURATION%","".$duration, $filename );
+			$filename = mb_str_replace("%DURATION%","".$duration, $filename );
+			
+			// あると面倒くさそうな文字を全部_に
+			$filename = preg_replace("/[ \.\/\*:<>\?\\|()\'\"&]/u","_", trim($filename) );
 			
 			// 文字コード変換
 			if( defined("FILESYSTEM_ENCODING") ) {
 				$filename = mb_convert_encoding( $filename, FILESYSTEM_ENCODING, "UTF-8" );
 			}
+			
 			$filename .= $RECORD_MODE["$mode"]['suffix'];
 			$thumbname = $filename.".jpg";
 			
@@ -297,6 +303,7 @@ class Reservation {
 			}
 			else {
 				$rrec->delete();
+				reclog( "Reservation::custom atの実行に失敗した模様", E_ERROR);
 				throw new Exception("AT実行エラー");
 			}
 			// job番号を取り出す
@@ -310,11 +317,13 @@ class Reservation {
 			if( $key !== false ) {
 				if( is_numeric( $rarr[$key+1]) ) {
 					$rrec->job = $rarr[$key+1];
+					reclog( "Reservation::custom ジョブ番号".$rrec->job."に録画ジョブを登録");
 					return $rrec->job;			// 成功
 				}
 			}
 			// エラー
 			$rrec->delete();
+			reclog( "Reservation::custom job番号の取得に失敗",E_ERROR );
 			throw new Exception( "job番号の取得に失敗" );
 		}
 		catch( Exception $e ) {
@@ -346,13 +355,16 @@ class Reservation {
 			}
 			if( ! $rec->complete ) {
 				// 未実行の予約である
-				if( toTimestamp($rec->starttime) < (time() + PADDING_TIME + $settings->former_time) )
-					throw new Exception("過去の録画予約です");
+				if( toTimestamp($rec->starttime) < (time() + PADDING_TIME + $settings->former_time) ) {
+					reclog("Reservation::cancel 未実行の予約の取り消しが実行された", E_ERROR );
+				}
 				exec( $settings->atrm . " " . $rec->job );
+				reclog("Reservation::cancel ジョブ番号".$rec->job."を削除");
 			}
 			$rec->delete();
 		}
 		catch( Exception $e ) {
+			reclog("Reservation::cancel 予約キャンセルでDB接続またはアクセスに失敗した模様", E_ERROR );
 			throw $e;
 		}
 	}

@@ -3,6 +3,7 @@ include_once('config.php');
 include_once( INSTALL_PATH . '/DBRecord.class.php' );
 include_once( INSTALL_PATH . '/Smarty/Smarty.class.php' );
 include_once( INSTALL_PATH . '/Settings.class.php' );
+include_once( INSTALL_PATH . '/Keyword.class.php' );
 
 $settings = Settings::factory();
 
@@ -20,66 +21,49 @@ $weekofdays = array(
 					array( "name" => "なし", "id" => 7, "selected" => "" ),
 );
 
+
 $autorec_modes = $RECORD_MODE;
 $autorec_modes[(int)($settings->autorec_mode)]['selected'] = "selected";
 
-$weekofday = 7;
 $search = "";
 $use_regexp = 0;
 $type = "*";
 $category_id = 0;
-$station = 0;
+$channel_id = 0;
+$weekofday = 7;
+$prgtime = 24;
 
-// mysql_real_escape_stringより先に接続しておく必要がある
-$dbh = @mysql_connect($settings->db_host, $settings->db_user, $settings->db_pass );
-
-	// パラメータの処理
+// パラメータの処理
 if(isset( $_POST['do_search'] )) {
 	if( isset($_POST['search'])){
-		if( $_POST['search'] != "" ) {
-			$search = $_POST['search'];
-			if( isset($_POST['use_regexp']) && ($_POST['use_regexp']) ) {
-				$use_regexp = $_POST['use_regexp'];
-				$options .= " AND CONCAT(title,description) REGEXP '".mysql_real_escape_string($search)."'";
-			}
-			else {
-				$options .= " AND CONCAT(title,description) like '%".mysql_real_escape_string($search)."%'";
-			}
+		$search = $_POST['search'];
+		if( isset($_POST['use_regexp']) && ($_POST['use_regexp']) ) {
+			$use_regexp = (int)($_POST['use_regexp']);
 		}
 	}
 	if( isset($_POST['type'])){
-		if( $_POST['type'] != "*" ) {
-			$type = $_POST['type'];
-			$options .= " AND type = '".$_POST['type']."'";
-		}
+		$type = $_POST['type'];
 	}
 	if( isset($_POST['category_id'])) {
-		if( $_POST['category_id'] != 0 ) {
-			$category_id = $_POST['category_id'];
-			$options .= " AND category_id = '".$_POST['category_id']."'";
-		}
+		$category_id = (int)($_POST['category_id']);
 	}
 	if( isset($_POST['station'])) {
-		if( $_POST['station'] != 0 ) {
-			$station = $_POST['station'];
-			$options .= " AND channel_id = '".$_POST['station']."'";
-		}
+		$channel_id = (int)($_POST['station']);
 	}
 	if( isset($_POST['weekofday']) ) {
-		$weekofday = $_POST['weekofday'];
-		if( $weekofday != 7 ) {
-			$options .= " AND WEEKDAY(starttime) = '".$weekofday."'";
-		}
+		$weekofday = (int)($_POST['weekofday']);
+	}
+	if( isset($_POST['prgtime']) ) {
+		$prgtime = (int)($_POST['prgtime']);
 	}
 }
-$options .= " ORDER BY starttime ASC LIMIT 300";
+
 $do_keyword = 0;
-if( ($search != "") || ($type != "*") || ($category_id != 0) || ($station != 0) )
+if( ($search != "") || ($type != "*") || ($category_id != 0) || ($channel_id != 0) )
 	$do_keyword = 1;
 	
 try{
-	
-	$precs = DBRecord::createRecords(PROGRAM_TBL, $options );
+	$precs = Keyword::search( $search, $use_regexp, $type, $category_id, $channel_id, $weekofday, $prgtime );
 	
 	$programs = array();
 	foreach( $precs as $p ) {
@@ -147,16 +131,28 @@ try{
 	$stations = array();
 	$stations[0]['id'] = 0;
 	$stations[0]['name'] = "すべて";
-	$stations[0]['selected'] = (! $station) ? "selected" : "";
+	$stations[0]['selected'] = (! $channel_id) ? "selected" : "";
 	foreach( $crecs as $c ) {
 		$arr = array();
 		$arr['id'] = $c->id;
 		$arr['name'] = $c->name;
-		$arr['selected'] = $station == $c->id ? "selected" : "";
-		if( $station == $c->id ) $k_station_name = $c->name;
+		$arr['selected'] = $channel_id == $c->id ? "selected" : "";
+		if( $channel_id == $c->id ) $k_station_name = $c->name;
 		array_push( $stations, $arr );
 	}
 	$weekofdays["$weekofday"]["selected"] = "selected" ;
+	
+	// 時間帯
+	$prgtimes = array();
+	for( $i=0; $i < 25; $i++ ) {
+		array_push( $prgtimes, 
+			array(  "name" => ( $i == 24  ? "なし" : sprintf("%0d時～",$i) ),
+					"value" => $i,
+					"selected" =>  ( $i == $prgtime ? "selected" : "" ) )
+		);
+	}
+
+
 
 	$smarty = new Smarty();
 	$smarty->assign("sitetitle","番組検索");
@@ -170,13 +166,15 @@ try{
 	$smarty->assign( "search" , $search );
 	$smarty->assign( "use_regexp", $use_regexp );
 	$smarty->assign( "stations", $stations );
-	$smarty->assign( "k_station", $station );
+	$smarty->assign( "k_station", $channel_id );
 	$smarty->assign( "k_station_name", $k_station_name );
 	$smarty->assign( "weekofday", $weekofday );
 	$smarty->assign( "k_weekofday", $weekofdays["$weekofday"]["name"] );
 	$smarty->assign( "weekofday", $weekofday );
 	$smarty->assign( "weekofdays", $weekofdays );
 	$smarty->assign( "autorec_modes", $autorec_modes );
+	$smarty->assign( "prgtimes", $prgtimes );
+	$smarty->assign( "prgtime", $prgtime );
 	$smarty->display("programTable.html");
 }
 catch( exception $e ) {

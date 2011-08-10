@@ -1,8 +1,11 @@
 #!/usr/bin/php
 <?php
-include_once( "config.php" );
+$script_path = dirname( __FILE__ );
+chdir( $script_path );
+include_once( $script_path . '/config.php');
 include_once( INSTALL_PATH . "/DBRecord.class.php" );
 include_once( INSTALL_PATH . "/Settings.class.php" );
+include_once( INSTALL_PATH . "/recLog.inc.php" );
 
 $settings = Settings::factory();
 
@@ -10,10 +13,12 @@ $reserve_id = $argv[1];
 
 try{
 	$rrec = new DBRecord( RESERVE_TBL, "id" , $reserve_id );
+	$rrec->complete = '1';
 	
 	if( file_exists( INSTALL_PATH .$settings->spool . "/". $rrec->path ) ) {
 		// 予約完了
-		$rrec->complete = '1';
+		reclog( "recomplete:: 予約ID". $rrec->id .":".$rrec->type.$rrec->channel.$rrec->title."の録画が完了" );
+		
 		if( $settings->mediatomb_update == 1 ) {
 			// ちょっと待った方が確実っぽい
 			@exec("sync");
@@ -34,10 +39,13 @@ try{
 	}
 	else {
 		// 予約失敗
+		reclog( "recomplete:: 予約ID". $rrec->id .":".$rrec->type.$rrec->channel.$rrec->title."の録画に失敗した模様", E_ERROR );
 		$rrec->delete();
 	}
 }
 catch( exception $e ) {
+	reclog( "recomplete:: 予約テーブルのアクセスに失敗した模様", E_ERROR );
+	reclog( "recomplete:: ".$e->getMessage()."" , E_ERROR );
 	exit( $e->getMessage() );
 }
 
