@@ -1,0 +1,5 @@
+cache/*
+settings/*
+templates_c/*
+#*.rb
+

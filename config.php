@@ -1,0 +1,246 @@
+<?php
+
+// settings/gr_channel.phpが作成された場合、
+// config.php内の$GR_CHANNEL_MAPは無視されます
+
+// 首都圏用地上デジタルチャンネルマップ
+// 識別子 => チャンネル番号
+//$GR_CHANNEL_MAP = array(
+//	"GR27" => "27",		// NHK
+//	"GR26" => "26",		// 教育
+//	"GR25" => "25",		// 日テレ
+//	"GR22" => "22",		// 東京
+//	"GR21" => "21",		// フジ
+//	"GR24" => "24",		// テレ朝
+//	"GR23" => "23",		// テレ東
+////	"GR20" => "20",		// MX TV
+////	"GR18" => "18",		// テレ神
+//	"GR30" => "30",		// 千葉
+////	"GR32" => "32",		// テレ玉
+//	"GR28" => "28",		// 大学
+//);
+//
+/*
+// 大阪地区デジタルチャンネルマップ（参考）
+$GR_CHANNEL_MAP = array(
+	"GR24" => "24",		// NHK
+	"GR13" => "13",		// 教育
+	"GR16" => "16",		// 毎日
+	"GR15" => "15",		// 朝日
+	"GR17" => "17",		// 関西
+	"GR14" => "14",		// 読売
+	"GR18" => "18",		// テレビ大阪
+);
+*/
+ $GR_CHANNEL_MAP = array(
+     "GR22" => "22",     // NHK
+     "GR13" => "13",     // 教育
+     "GR16" => "16",     // 毎日
+     "GR15" => "15",     // 朝日
+     "GR17" => "17",     // 関西
+     "GR14" => "14",     // 読売
+     "GR26" => "26",     // サンテレビ
+ );
+
+
+
+// 録画モード（option）
+
+$RECORD_MODE = array(
+	// ※ 0は必須で、変更不可です。
+	0 => array(
+		'name' => 'Full TS',	// モードの表示名
+		'suffix' => '.ts',	// ファイル名のサフィックス
+	),
+	
+	1 => array(
+		'name' => 'Minimum TS',	// 最小のTS
+		'suffix' => '_tss.ts',	// do-record.shのカスタマイズが必要
+	),
+	
+	/* Example is as follows.
+	2 => array(
+		'name' => '12Mbps MPEG4',
+		'suffix' => '.avi',
+	),
+	*/
+);
+
+
+// BSチューナーとして黒Friioを用いているのなら下のfalseをtrueに変えてください。
+
+define( "USE_KUROBON", false );
+
+
+
+//////////////////////////////////////////////////////////////////////////////
+// 以降の変数・定数はほとんどの場合、変更する必要はありません
+
+
+define( "INSTALL_PATH", dirname(__FILE__) );		// インストールパス
+
+// 以降は必要に応じて変更する
+
+define( "PADDING_TIME", 180 );						// 詰め物時間
+define( "DO_RECORD", INSTALL_PATH . "/do-record.sh" );		// レコードスクリプト
+define( "COMPLETE_CMD", INSTALL_PATH . "/recomplete.php" );	// 録画終了コマンド
+define( "GEN_THUMBNAIL", INSTALL_PATH . "/gen-thumbnail.sh" );	// サムネール生成スクリプト
+
+// BS/CSでEPGを取得するチャンネル
+// 通常は変える必要はありません
+// BSでepgdumpが頻繁に落ちる場合は、受信状態のいいチャンネルに変えることで
+// 改善するかもしれません
+
+define( "BS_EPG_CHANNEL",  "211"  );	// BS
+define( "CS1_EPG_CHANNEL", "CS8"  );	// CS1
+define( "CS2_EPG_CHANNEL", "CS24" );	// CS2
+
+
+// 地上デジタルチャンネルテーブルsettings/gr_channel.phpが存在するならそれを
+// 優先する
+if( file_exists( INSTALL_PATH."/settings/gr_channel.php" ) ) {
+	unset($GR_CHANNEL_MAP);
+	include_once( INSTALL_PATH."/settings/gr_channel.php" );
+}
+
+//
+// settings/site_conf.phpがあればそれを優先する
+//
+if( file_exists( INSTALL_PATH."/settings/site_conf.php" ) ) {
+	unset($GR_CHANNEL_MAP);
+	unset($RECORD_MODE);
+	include_once( INSTALL_PATH."/settings/site_conf.php" );
+}
+
+
+// 全国用BSデジタルチャンネルマップ
+$BS_CHANNEL_MAP = array(
+        "3001.ontvjapan.com" => "101",
+        "3002.ontvjapan.com" => "102",
+        "3003.ontvjapan.com" => "103",
+        "3004.ontvjapan.com" => "141",
+        "3005.ontvjapan.com" => "151",
+        "3006.ontvjapan.com" => "161",
+        "3007.ontvjapan.com" => "171",
+        "3008.ontvjapan.com" => "181",
+        "3009.ontvjapan.com" => "191",
+        "3010.ontvjapan.com" => "192",
+        "3011.ontvjapan.com" => "193",
+        "3013.ontvjapan.com" => "211",
+        "3014.ontvjapan.com" => "222",
+);
+
+if( USE_KUROBON ) {
+	$BS_CHANNEL_MAP = array(
+    	    "3001.ontvjapan.com" => "B10",
+	        "3002.ontvjapan.com" => "B10",
+	        "3003.ontvjapan.com" => "B11",
+	        "3004.ontvjapan.com" => "B8",
+	        "3005.ontvjapan.com" => "B1",
+	        "3006.ontvjapan.com" => "B2",
+	        "3007.ontvjapan.com" => "B4",
+	        "3008.ontvjapan.com" => "B9",
+	        "3009.ontvjapan.com" => "B3",
+	        "3010.ontvjapan.com" => "B3",
+	        "3011.ontvjapan.com" => "B3",
+	        "3013.ontvjapan.com" => "B5",
+	        "3014.ontvjapan.com" => "B7",
+	);
+}
+
+// 全国用CSデジタルチャンネルマップ
+$CS_CHANNEL_MAP = array(
+	"1002.ontvjapan.com"		=>	"CS2", // 237,	//	"スターｃｈプラス"
+	"1086.ontvjapan.com"		=>	"CS2", // 239,	// "日本映画専門ｃｈＨＤ"
+	"306ch.epgdata.ontvjapan"	=>	"CS2", // 306,	// "フジテレビＣＳＨＤ"
+
+	"100ch.epgdata.ontvjapan"	=>	"CS4", // 100,	// "ｅ２プロモ"
+	"1025.ontvjapan.com"		=>	"CS4", // 256,	// "Ｊスポーツ　ＥＳＰＮ"
+	"1016.ontvjapan.com"		=>	"CS4", // 312,	// "ＦＯＸ"
+	"1018.ontvjapan.com"		=>	"CS4", // 322,	// "スペースシャワーＴＶ"
+	"1046.ontvjapan.com"		=>	"CS4", // 331,	// "カートゥーン　ネット"
+	"194ch.epgdata.ontvjapan"	=>	"CS4", // 194,	// "インターローカルＴＶ"
+	"1213.ontvjapan.com"		=>	"CS4", // 334,	// "トゥーン・ディズニー"
+
+	"1010.ontvjapan.com"		=>	"CS6", // 221,	// "東映チャンネル"
+	"1005.ontvjapan.com"		=>	"CS6", // 222,	// "衛星劇場"
+	"1008.ontvjapan.com"		=>	"CS6", // 223,	// "チャンネルＮＥＣＯ"
+	"1009.ontvjapan.com"		=>	"CS6", // 224,	// "洋画★シネフィル"
+	"1133.ontvjapan.com"		=>	"CS6", // 292,	// "時代劇専門チャンネル"
+	"1003.ontvjapan.com"		=>	"CS6", // 238,	// "スター・クラシック"
+	"1006.ontvjapan.com"		=>	"CS6", // 310,	// "スーパードラマ"
+	"1014.ontvjapan.com"		=>	"CS6", // 311,	// "ＡＸＮ"
+	"1204.ontvjapan.com"		=>	"CS6", // 343,	// "ナショジオチャンネル"
+
+	"1059.ontvjapan.com"		=>	"CS8", // 55,	//  "ショップチャンネル"
+
+	"1217.ontvjapan.com"		=>	"CS10", // 228,	// "ザ・シネマ"
+	"800ch.epgdata.ontvjapan"	=>	"CS10", // 800,	// "スカチャンＨＤ８００"
+	"801ch.epgdata.ontvjapan"	=>	"CS10", // 801,	// "スカチャン８０１"
+	"802ch.epgdata.ontvjapan"	=>	"CS10", // 802,	// "スカチャン８０２"
+
+	"1028.ontvjapan.com"		=>	"CS12", // 260,	// "ゴルフチャンネル"
+	"1092.ontvjapan.com"		=>	"CS12", // 303,	// "テレ朝チャンネル"
+	"1019.ontvjapan.com"		=>	"CS12", // 323,	// "ＭＴＶ"
+	"1024.ontvjapan.com"		=>	"CS12", // 324,	// "ミュージック・エア"
+	"1067.ontvjapan.com"		=>	"CS12", // 352,	// "朝日ニュースター"
+	"1070.ontvjapan.com"		=>	"CS12", // 353,	// "ＢＢＣワールド"
+	"1069.ontvjapan.com"		=>	"CS12", // 354,	// "ＣＮＮｊ"
+	"361ch.epgdata.ontvjapan"	=>	"CS12", // 361,	// "ジャスト・アイ"
+
+	"1041.ontvjapan.com"		=>	"CS14", // 251,	// "Ｊスポーツ　１"
+	"1042.ontvjapan.com"		=>	"CS14", // 252,	// "Ｊスポーツ　２"
+	"1043.ontvjapan.com"		=>	"CS14", // 253,	// "ＪスポーツＰｌｕｓＨ"
+	"1026.ontvjapan.com"		=>	"CS14", // 254,	// "ＧＡＯＲＡ"
+	"1040.ontvjapan.com"		=>	"CS14", // 255,	// "ｓｋｙ・Ａスポーツ＋"
+
+	"305ch.epgdata.ontvjapan"	=>	"CS16", // 305,	// "チャンネル銀河"
+	"1201.ontvjapan.com"		=>	"CS16", // 333,	// "ＡＴ-Ｘ"
+	"1050.ontvjapan.com"		=>	"CS16", // 342,	// "ヒストリーチャンネル"
+	"803ch.epgdata.ontvjapan"	=>	"CS16", // 803,	// "スカチャン８０３"
+	"804ch.epgdata.ontvjapan"	=>	"CS16", // 804,	// "スカチャン８０４"
+	"1207.ontvjapan.com"		=>	"CS16", // 290,	// "ＳＫＹ・ＳＴＡＧＥ"
+
+	"1007.ontvjapan.com"		=>	"CS18", // 240,	// "ムービープラスＨＤ"
+	"1027.ontvjapan.com"		=>	"CS18", // 262,	// "ゴルフネットワーク"
+	"1074.ontvjapan.com"		=>	"CS18", // 314,	// "ＬａＬａ　ＨＤ"
+
+	"1073.ontvjapan.com"		=>	"CS20", // 258,	// "フジテレビ７３９"
+	"1072.ontvjapan.com"		=>	"CS20", // 302,	// "フジテレビ７２１"
+	"1047.ontvjapan.com"		=>	"CS20", // 332,	// "アニマックス"
+	"1062.ontvjapan.com"		=>	"CS20", // 340,	// "ディスカバリー"
+	"1193.ontvjapan.com"		=>	"CS20", // 341,	// "アニマルプラネット"
+
+	"160ch.epgdata.ontvjapan"	=>	"CS22", // 160,	// "Ｃ-ＴＢＳウエルカム"
+	//"1120.ontvjapan.com"		=>	"CS22", // 161,	// "ＱＶＣ"
+	"185ch.epgdata.ontvjapan"	=>	"CS22", // 185,	// "プライム３６５．ＴＶ"
+	"1015.ontvjapan.com"		=>	"CS22", // 293,	// "ファミリー劇場"
+	"3201.ontvjapan.com"		=>	"CS22", // 301,	// "ＴＢＳチャンネル"
+	"1090.ontvjapan.com"		=>	"CS22", // 304,	// "ディズニーチャンネル"
+	"1022.ontvjapan.com"		=>	"CS22", // 325,	// "MUSIC ON! TV"
+	"1045.ontvjapan.com"		=>	"CS22", // 330,	// "キッズステーション"
+	"1076.ontvjapan.com"		=>	"CS22", // 351,	// "ＴＢＳニュースバード"
+
+	"1068.ontvjapan.com"		=>	"CS24", // 257,	// "日テレＧ＋"
+	"5004.ontvjapan.com"		=>	"CS24", // 291,	// "fashion TV"
+	"300ch.epgdata.ontvjapan"	=>	"CS24", // 300,	// "日テレプラス"
+	"1023.ontvjapan.com"		=>	"CS24", // 320,	// "エコミュージックＴＶ"
+	"1208.ontvjapan.com"		=>	"CS24", // 321,	// "Music Japan TV"
+	"2002.ontvjapan.com"		=>	"CS24", // 350,	// "日テレＮＥＷＳ２４"
+	/*
+	"110ch.epgdata.ontvjapan"	=>	"CS22", 110,	// "ワンテンポータル"
+	"101ch.epgdata.ontvjapan"	=>	"CS22", 101,	// "宝塚プロモチャンネル"
+	"147ch.epgdata.ontvjapan"	=>	"CS22", 147,	// "ＣＳ日本番組ガイド"
+	*/
+);
+
+// DBテーブル情報　以下は変更しないでください
+
+define( "RESERVE_TBL",  "reserveTbl" );						// 予約テーブル
+define( "PROGRAM_TBL",  "programTbl" );						// 番組表
+define( "CHANNEL_TBL",  "channelTbl" );						// チャンネルテーブル
+define( "CATEGORY_TBL", "categoryTbl" );					// カテゴリテーブル
+define( "KEYWORD_TBL", "keywordTbl" );						// キーワードテーブル
+// ログテーブル
+define( "LOG_TBL", "logTbl" );
+?>
