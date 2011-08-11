@@ -1,4 +1,4 @@
 settings/*
 .hg/*
-templates_c/*
+templates_c/*.php
 cache/*
