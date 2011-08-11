@@ -48,19 +48,7 @@ end
 def video_list()
   require 'rubygems'
   require 'active_record'
-  eval('class Reserve < ActiveRecord::Base
-    set_primary_key :id
-    set_table_name :Recorder_reserveTbl
-    set_inheritance_column :sub_type_class
-  end
-  ActiveRecord::Base.establish_connection(
-  :adapter=>"mysql",
-  :host  =>"localhost",
-  :database =>"epgrec",
-  :username=>"root",
-  :password=>"1234",
-  :encoding=>"utf8"
-  )')
+  require './model.rb'
   t1 = (Time.now-60*60*24).strftime('%Y-%m-%d') #昨日 
   t2 = (Time.now).strftime('%Y-%m-%d')          #今日
   Reserve.find(:all,:conditions=>"starttime > '#{t1} 4:00' and endtime <  '#{t2} 4:00'").map{|w|w.path}
