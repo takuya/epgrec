@@ -63,7 +63,7 @@ if( ($search != "") || ($type != "*") || ($category_id != 0) || ($channel_id != 
 	$do_keyword = 1;
 	
 try{
-	$precs = Keyword::search( $search, $use_regexp, $type, $category_id, $channel_id, $weekofday, $prgtime );
+	$precs = Keyword::search( $search, $use_regexp, $type, $category_id, $channel_id, $weekofday, $prgtime,  30 );
 	
 	$programs = array();
 	foreach( $precs as $p ) {

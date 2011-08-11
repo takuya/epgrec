@@ -224,9 +224,9 @@ table#reservation_table tr.prg_rec  {background-color: #F55;color:#FEE}
   該当する番組はありません
 {/if}
 <div>{$programs|@count}件ヒット</div>
-{if count($programs) >= 300}<div>表示最大300件まで</div>{/if}
+{if count($programs) >= 30}<div>表示最大30件まで</div>{/if}
 {if $do_keyword}
-{if (count($programs) < 300)}
+{if (count($programs) < 30)}
 <div>
 <form method="post" action="keywordTable.php">
   <b>語句:</b>{$search|escape}

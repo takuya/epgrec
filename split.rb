@@ -58,7 +58,7 @@ def video_list()
   :host  =>"localhost",
   :database =>"epgrec",
   :username=>"root",
-  :password=>"***",
+  :password=>"1234",
   :encoding=>"utf8"
   )')
   t1 = (Time.now-60*60*24).strftime('%Y-%m-%d') #昨日 
