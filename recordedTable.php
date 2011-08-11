@@ -42,11 +42,12 @@ if(isset( $_REQUEST['do_search'] )) {
 		}
 	}
 	if( isset($_REQUEST['date'])) {
-		if( $_REQUEST['date'] != 0 ) {
-			$time = strtotime( $_REQUEST['date'] );
+		$time = @strtotime( $_REQUEST['date'] );
+		if( $time > 0 ) {
+      $time = $time - 60*60*4;
 			$day_start_time = date( "Y-m-d 04:00:00", $time );
 			$day_end_time   = date( "Y-m-d 04:00:00", $time+60*60*24 );
-			$options .= " AND starttime >= '{$day_start_time} ' AND endtime < '{$day_end_time} '";
+      $options .= " AND starttime >= '{$day_start_time} ' AND endtime < '{$day_end_time} '";
 		}
 	}
 }

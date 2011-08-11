@@ -51,8 +51,8 @@ def video_list()
   require './model.rb'
   t1 = (Time.now-60*60*24).strftime('%Y-%m-%d') #昨日 
   t2 = (Time.now).strftime('%Y-%m-%d')          #今日
-  Reserve.find(:all,:conditions=>"starttime > '#{t1} 4:00' and endtime <  '#{t2} 4:00'").map{|w|w.path}
-  #Reserve.find(:all,:conditions=>"starttime > '2011-07-25 0:00' and endtime <  '2011-07-26 0:00'").map{|w|w.path}
+ #Reserve.find(:all,:conditions=>"starttime > '#{t1} 4:00' and endtime <  '#{t2} 4:00'").map{|w|w.path}
+  #Reserve.find(:all,:conditions=>"starttime > '2010-07-25 0:00' and endtime <  '2010-07-26 0:00'").map{|w|w.path}
 end
 
 class UnSplittedError < Exception; end
