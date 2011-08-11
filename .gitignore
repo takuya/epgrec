@@ -1,0 +1,4 @@
+settings/*
+.hg/*
+templates_c/*
+cache/*
