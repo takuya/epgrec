@@ -34,27 +34,27 @@ $weekofday = 7;
 $prgtime = 24;
 
 // パラメータの処理
-if(isset( $_POST['do_search'] )) {
-	if( isset($_POST['search'])){
-		$search = $_POST['search'];
-		if( isset($_POST['use_regexp']) && ($_POST['use_regexp']) ) {
-			$use_regexp = (int)($_POST['use_regexp']);
+if(isset( $_REQUEST['do_search'] )) {
+	if( isset($_REQUEST['search'])){
+		$search = $_REQUEST['search'];
+		if( isset($_REQUEST['use_regexp']) && ($_REQUEST['use_regexp']) ) {
+			$use_regexp = (int)($_REQUEST['use_regexp']);
 		}
 	}
-	if( isset($_POST['type'])){
-		$type = $_POST['type'];
+	if( isset($_REQUEST['type'])){
+		$type = $_REQUEST['type'];
 	}
-	if( isset($_POST['category_id'])) {
-		$category_id = (int)($_POST['category_id']);
+	if( isset($_REQUEST['category_id'])) {
+		$category_id = (int)($_REQUEST['category_id']);
 	}
-	if( isset($_POST['station'])) {
-		$channel_id = (int)($_POST['station']);
+	if( isset($_REQUEST['station'])) {
+		$channel_id = (int)($_REQUEST['station']);
 	}
-	if( isset($_POST['weekofday']) ) {
-		$weekofday = (int)($_POST['weekofday']);
+	if( isset($_REQUEST['weekofday']) ) {
+		$weekofday = (int)($_REQUEST['weekofday']);
 	}
-	if( isset($_POST['prgtime']) ) {
-		$prgtime = (int)($_POST['prgtime']);
+	if( isset($_REQUEST['prgtime']) ) {
+		$prgtime = (int)($_REQUEST['prgtime']);
 	}
 }
 
