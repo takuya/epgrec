@@ -3,6 +3,7 @@ include_once('config.php');
 include_once( INSTALL_PATH . '/DBRecord.class.php' );
 include_once( INSTALL_PATH . '/Smarty/Smarty.class.php' );
 include_once( INSTALL_PATH . '/Settings.class.php' );
+require 'Keyword.class.php';
 
 $settings = Settings::factory();
 
@@ -11,6 +12,7 @@ $order = "";
 $search = "";
 $category_id = 0;
 $station = 0;
+$_date = "";
 
 // mysql_real_escape_stringより先に接続しておく必要がある
 $dbh = @mysql_connect( $settings->db_host, $settings->db_user, $settings->db_pass );
@@ -44,6 +46,7 @@ if(isset( $_REQUEST['do_search'] )) {
 	if( isset($_REQUEST['date'])) {
 		$time = @strtotime( $_REQUEST['date'] );
 		if( $time > 0 ) {
+			$_date = $_REQUEST["date"];
 			$day_start_time = date( "Y-m-d 04:00:00", $time );
 			$day_end_time   = date( "Y-m-d 04:00:00", $time+60*60*24 );
             $options .= " AND starttime >= '{$day_start_time} ' AND starttime < '{$day_end_time} '";
@@ -112,14 +115,32 @@ try{
 		$arr['selected'] = $station == $c->id ? "selected" : "";
 		array_push( $stations, $arr );
 	}
-	
+	$recs = Keyword::createRecords(KEYWORD_TBL);
+	$keywords = array();
+	foreach($recs as $rec){
+	    $keywords[] = $rec->keyword;
+	}
+	//カレンダ
+	$date_list = array();
+	$dw = array( "日", "月", "火", "水", "木", "金", "土" );
+	$date = strtotime('last Monday');
+	foreach(range(0,6) as $i ){
+			$date_list[] = array( 
+					"date" => date('Y-m-d',$date + 60*60*24*$i ),
+					"dw" =>   $dw[date('w',$date + 60*60*24*$i )],
+					"day" => date('m月d日',$date + 60*60*24*$i ),
+					) ;
+	}
 	
 	$smarty = new Smarty();
-	$smarty->assign("sitetitle","録画済一覧");
-	$smarty->assign( "records", $records );
-	$smarty->assign( "search", $search );
-	$smarty->assign( "stations", $stations );
-	$smarty->assign( "cats", $cats );
+	$smarty->assign( "sitetitle" , "録画済一覧"          );
+	$smarty->assign( "records"   , $records              );
+	$smarty->assign( "keywords"  , $keywords             );
+	$smarty->assign( "date_list" , $date_list            );
+	$smarty->assign( "_date"     , $_date                );
+	$smarty->assign( "search"    , $search               );
+	$smarty->assign( "stations"  , $stations             );
+	$smarty->assign( "cats"      , $cats                 );
 	$smarty->assign( "use_thumbs", $settings->use_thumbs );
 	
 	//limit/offset
