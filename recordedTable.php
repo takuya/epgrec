@@ -80,7 +80,7 @@ try{
 		$arr['station_name'] = $ch->name;
 		$arr['starttime'] = $r->starttime;
 		$arr['endtime'] = $r->endtime;
-		$arr['asf'] = "".$settings->install_url."/viewer.php?reserve_id=".$r->id;
+		$arr['asf'] = "".$settings->install_url."/viewer.php?reserve_ids[]=".$r->id;
 		$arr['title'] = htmlspecialchars($r->title,ENT_QUOTES);
 		$arr['description'] = htmlspecialchars($r->description,ENT_QUOTES);
 		$arr['thumb'] = "<img src=\"".$settings->install_url.$settings->thumbs."/".htmlentities($r->path, ENT_QUOTES,"UTF-8").".jpg\" />";
@@ -148,6 +148,12 @@ try{
 		$smarty->assign( "limit",$limit);
 		$smarty->assign( "offset",$offset);
 	}
+	//連続再生用
+	$str = "". $settings->install_url."/viewer.php?";
+	foreach($records as $record){
+		$str = $str."reserve_ids[]=".$record["id"]."&";
+	}
+	$smarty->assign( "play_list", $str );
 
 
 	$smarty->display("recordedTable.html");

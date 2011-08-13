@@ -43,7 +43,6 @@
   $temp_xml_cs1 = $settings->temp_xml."_cs1";
   $temp_xml_cs2 = $settings->temp_xml."_cs2";
   $temp_xml_gr  = $settings->temp_xml."_gr";
-  
   if( file_exists( $settings->temp_data ) ) @unlink( $settings->temp_data );
   
   // BSを処理する
