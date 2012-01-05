@@ -46,7 +46,6 @@ if(isset( $_REQUEST['do_search'] )) {
 	if( isset($_REQUEST['date'])) {
 		$time = @strtotime( $_REQUEST['date'] );
 		if( $time > 0 ) {
-			$_date = $_REQUEST["date"];
 			$day_start_time = date( "Y-m-d 04:00:00", $time );
 			$day_end_time   = date( "Y-m-d 04:00:00", $time+60*60*24 );
             $options .= " AND starttime >= '{$day_start_time} ' AND starttime < '{$day_end_time} '";
@@ -71,6 +70,7 @@ if( isset($_REQUEST['offset'])) {
 
 try{
 	$rvs = DBRecord::createRecords(RESERVE_TBL, $options );
+	$dw = array( "日", "月", "火", "水", "木", "金", "土" );
 	$records = array();
 	foreach( $rvs as $r ) {
 		$cat = new DBRecord(CATEGORY_TBL, "id", $r->category_id );
@@ -78,7 +78,8 @@ try{
 		$arr = array();
 		$arr['id'] = $r->id;
 		$arr['station_name'] = $ch->name;
-		$arr['starttime'] = $r->starttime;
+        $_time = strtotime($r->starttime);
+		$arr['starttime'] = date("m月d日",$_time )."(".$dw[date('w',$_time)].")".date("\n H:i:00 ",$_time);
 		$arr['endtime'] = $r->endtime;
 		$arr['asf'] = "".$settings->install_url."/viewer.php?reserve_ids[]=".$r->id;
 		$arr['title'] = htmlspecialchars($r->title,ENT_QUOTES);

@@ -154,8 +154,8 @@ table#reservation_table tr.ctg_10, #category_select a.ctg_10 {background-color: 
 <div style="display:inline-block"><a href="./recordedTable.php?do_search=1&search=０６５５">０６５５</a></div>
 <div style="display:inline-block"><a href="./recordedTable.php?do_search=1&search=大科学実験">大科学実験</a></div>
 <div style="display:inline-block"><a href="./recordedTable.php?do_search=1&search=美の壺">美の壺</a></div>
-<div style="display:inline-block"><a href="./recordedTable.php?do_search=1&date=yesterday">昨日</a></div>
-<div style="display:inline-block"><a href="./recordedTable.php?do_search=1&date=today">今日</a></div>
+<div style="display:inline-block"><a href="./recordedTable.php?do_search=1&date={php}echo date("Y-m-d",strtotime('yesterday')-60*60*4);{/php}">昨日</a></div>
+<div style="display:inline-block"><a href="./recordedTable.php?do_search=1&date={php}echo date("Y-m-d",strtotime('today')-60*60*4);{/php}">今日</a></div>
 <div style="display:inline-block"><a href="./recordedTable.php?do_search=1&search=">すべて</a></div>
 </p>
 <input type=button onclick="{literal}(function(){ jQuery('#keywords').slideToggle()  })(){/literal}" value="予約キーワード表示"/>
