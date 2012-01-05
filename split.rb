@@ -48,11 +48,11 @@ end
 def video_list()
   require 'rubygems'
   require 'active_record'
-  require './model.rb'
+  require '/usr/share/epgrec/model.rb'
   t1 = (Time.now-60*60*24).strftime('%Y-%m-%d') #昨日 
   t2 = (Time.now).strftime('%Y-%m-%d')          #今日
- #Reserve.find(:all,:conditions=>"starttime > '#{t1} 4:00' and endtime <  '#{t2} 4:00'").map{|w|w.path}
-  #Reserve.find(:all,:conditions=>"starttime > '2010-07-25 0:00' and endtime <  '2010-07-26 0:00'").map{|w|w.path}
+  Reserve.find(:all,:conditions=>"starttime > '#{t1} 4:00' and endtime <  '#{t2} 4:00'").map{|w|w.path}
+  #Reserve.find(:all,:conditions=>"starttime > '2011-07-25 0:00' and endtime <  '2011-08-26 0:00'").map{|w|w.path}
 end
 
 class UnSplittedError < Exception; end
@@ -71,7 +71,7 @@ video_list().each{|e|
     swipe_pre_post_program(name)
     move_file( name )
 	rm_CS_file(name)
-	raise UnSplittedError , "#{name} は処理できてませんでした" if has_splitted?(name)
+	raise UnSplittedError , "#{name} は処理できてませんでした" if has_not_splitted?(name)
    rescue UnSplittedError => e
 		   retry_cnt = retry_cnt + 1
 		   next if retry_cnt > 3;
