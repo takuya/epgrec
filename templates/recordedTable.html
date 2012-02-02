@@ -207,6 +207,7 @@ table#reservation_table tr.ctg_10, #category_select a.ctg_10 {background-color: 
   <th>内容</th>
   <!--<th>変更</th> -->
   <th>削除</th>
+  <th>最後に見た時間</th>
  </tr>
 
 {foreach from=$records item=rec }
@@ -219,6 +220,7 @@ table#reservation_table tr.ctg_10, #category_select a.ctg_10 {background-color: 
   <td style="text-align:left;"><a href="{$rec.asf}" id="did_{$rec.id}">{$rec.description}</a></td>
   <!-- <td><input type="button" value="変更" onClick="javascript:PRG.editdialog('{$rec.id}')" /></td> -->
   <td><input type="button" value="削除" onClick="javascript:PRG.dialog('{$rec.id}','{$rec.title}')" /></td>
+  <td style="text-align:left;"><a href="{$rec.asf}" id="did_{$rec.id}">{$rec.viewedtime}</a></td>
  </tr>
 {/foreach}
 </table>

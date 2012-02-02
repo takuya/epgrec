@@ -87,6 +87,8 @@ try{
 		$arr['thumb'] = "<img src=\"".$settings->install_url.$settings->thumbs."/".htmlentities($r->path, ENT_QUOTES,"UTF-8").".jpg\" />";
 		$arr['cat'] = $cat->name_en;
 		$arr['mode'] = $RECORD_MODE[$r->mode]['name'];
+        $_time = $r->viewedtime ? strtotime($r->viewedtime) : null;
+		$arr['viewedtime'] = $_time ?date("m月d日",$_time )."(".$dw[date('w',$_time)].")".date("\n H:i:00 ",$_time):"";
 		
 		array_push( $records, $arr );
 	}
