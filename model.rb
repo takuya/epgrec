@@ -27,6 +27,18 @@ ActiveRecord::Base.establish_connection(
 #)
 
 #Thread.abort_on_exception=false
+class String
+		def &(str)
+				k = $KCODE
+				$KCODE='u'
+				a = self.split(//).zip(str.split(//)).map{ |e| e.uniq.size==1 }
+				idx = a.index(false)
+				return "" if idx == nil
+				return self.split(//).first(idx).join()
+				$KCODE= k
+				a
+		end
+end
 
 
 class Reserve < ActiveRecord::Base
@@ -64,11 +76,15 @@ class Reserve < ActiveRecord::Base
 	    return "not enough"
 	  end
   end
+  def find_relative_title()
+		 max= Reserve.find(:all,:conditions=>"complete=true").select{|e| (e.title&self.title).size>0}.reject{|e|e.title==self.title}.map{|e| (e.title & self.title).size}.max
+		 Reserve.find(:all,:conditions=>"complete=true").select{|e| (e.title&self.title).size>=max}
+  end
   def file_size_expected
-    bitrate = 16 #とりあえずデフォルト
-    bitrate = 24 if self.type=="BS"
-    bitrate = 16 if self.type=="GR"
-    (bitrate * 60 * self.rec_minutes / 8)
+		  bitrate = 16 #とりあえずデフォルト
+		  bitrate = 24 if self.type=="BS"
+		  bitrate = 16 if self.type=="GR"
+		  (bitrate * 60 * self.rec_minutes / 8)
   end
   def Reserve.delete_rec_missed
 		Reserve.find(:all).map.select{|e| e.ts_file_enough_length=="not enough"}.map{|e| e.delete_ts_and_destroy }
