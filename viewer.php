@@ -27,6 +27,8 @@ try{
 
 	foreach( $reserve_ids as $reserve_id){
 		$rrec = new DBRecord( RESERVE_TBL, "id", $reserve_id );
+		//
+		$rrec->viewedtime = date('Y-m-d H:i:s');
 	
 		$start_time = toTimestamp($rrec->starttime);
 		$end_time = toTimestamp($rrec->endtime );
