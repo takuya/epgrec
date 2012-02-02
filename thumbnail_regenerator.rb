@@ -16,8 +16,8 @@ offset       = config_xml.search("//former_time/text()").text.to_i + 20
 install_path = php_const["INSTALL_PATH"]
 
 
-t1 = (Time.now-60*60*24*3).strftime('%Y-%m-%d') #一昨日
-t2 = (Time.now-60*60*24*0.5).strftime('%Y-%m-%d') #昨日
+t1 = (Time.now-60*60*24*4).strftime('%Y-%m-%d') #一昨日
+t2 = (Time.now-60*60*24*1).strftime('%Y-%m-%d') #昨日
 names = Reserve.find( :all,
 				      #:conditions=>" title like '%美の壺%' "
 				      #:conditions=>"starttime > '2011-08-02 14:00' and starttime <  '2011-08-02 20:00'"
