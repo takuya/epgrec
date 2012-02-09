@@ -138,6 +138,7 @@ try{
 	$smarty = new Smarty();
 	$smarty->assign( "sitetitle" , "録画済一覧"          );
 	$smarty->assign( "records"   , $records              );
+	$smarty->assign( "count"     , sizeof($records)      );
 	$smarty->assign( "keywords"  , $keywords             );
 	$smarty->assign( "date_list" , $date_list            );
 	$smarty->assign( "_date"     , $_date                );
@@ -146,17 +147,53 @@ try{
 	$smarty->assign( "cats"      , $cats                 );
 	$smarty->assign( "use_thumbs", $settings->use_thumbs );
 	
-	//limit/offset
-	if(isset($limit)&& isset($offset)){
-		$smarty->assign( "limit",$limit);
-		$smarty->assign( "offset",$offset);
+	$next_query_string = "";
+	$prev_query_string = "";
+	$next_name = "次へ＞";
+	$prev_name = "＜前へ";
+	$curr_name = "";
+	if( isset($_REQUEST["search"] )){
+		$curr_name = htmlspecialchars($_REQUEST["search"])."の検索結果"; 
+		$next_name = "";
+		$prev_name = "";
+	
 	}
+	//limit/offset
+	if(isset($_REQUEST["limit"])){
+		$limit = (int)$_REQUEST["limit"];
+		$offset = isset($_REQUEST["offset"]) ? (int) $_REQUEST["offset"]: 0 ;
+        $next_query_string = "?do_search=1&limit=$limit&offset=".( $offset + $limit) ;	
+        $prev_query_string = "?do_search=1&limit=$limit&offset=".( ($offset - $limit) <0 ? 0 : $offset-$limit  );	
+		$next_name = "次の{$limit}件＞";
+		$prev_name = "<前の{$limit}件";
+	}
+	//検索条件が指定されていたら、次のページを指定する。
+	if( isset($_REQUEST["date"] ) ){
+	    $date = $_REQUEST["date"];
+		date_default_timezone_set("Asia/Tokyo"); 
+		$date = strtotime($date);
+		$next_day = date('Y-m-d',strtotime(" +1day ", $date));
+		$prev_day = date('Y-m-d',strtotime(" -1day ", $date));
+        $next_query_string = "?do_search=1&date=$next_day";	
+        $prev_query_string = "?do_search=1&date=$prev_day";	
+		$next_name = "次の日＞";
+		$prev_name = "＜前の日";
+		$curr_name = date('m月d日',$date)."の録画(".sizeof($records)."件)";
+
+	} 
 	//連続再生用
 	$str = "". $settings->install_url."/viewer.php?";
 	foreach($records as $record){
 		$str = $str."reserve_ids[]=".$record["id"]."&";
 	}
+
+	//paging
 	$smarty->assign( "play_list", $str );
+	$smarty->assign( "next_link", $next_query_string);
+	$smarty->assign( "prev_link", $prev_query_string);
+	$smarty->assign( "next_link_name", $next_name);
+	$smarty->assign( "prev_link_name", $prev_name);
+	$smarty->assign( "current_name",   $curr_name);
 
 
 	$smarty->display("recordedTable.html");

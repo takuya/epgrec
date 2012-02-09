@@ -158,6 +158,31 @@ table#reservation_table tr.ctg_10, #category_select a.ctg_10 {background-color: 
 <div style="display:inline-block"><a href="./recordedTable.php?do_search=1&date={php}echo date("Y-m-d",strtotime('today')-60*60*4);{/php}">今日</a></div>
 <div style="display:inline-block"><a href="./recordedTable.php?do_search=1&search=">すべて</a></div>
 </p>
+
+<div>
+絞り込み：
+<form method="get" action="recordedTable.php" >
+<input type="hidden" name="do_search" value="1" />
+<!--TODO ::この条件に日付を追加する -->
+検索<input type="text" size="30" name="search" placeholder="番組名:例（ガッテン）"  value="{$search}" />
+
+  <!-- 
+  局<select name="station">
+  {foreach from=$stations item=st}
+    <option value="{$st.id}" {$st.selected}>{$st.name}</option>
+  {/foreach}
+  </select>
+  -->
+  <!--カテゴリ
+  <select name="category_id">
+  {foreach from=$cats item=cat}
+  <option value="{$cat.id}" {$cat.selected}>{$cat.name}</option>
+  {/foreach}
+  -->
+</select>
+<input type="text" value="{$_date}" name="date" placeholder="日付:2012/2/1" size=12/>
+<input type="submit" value="絞り込む" />
+</form>
 <input type=button onclick="{literal}(function(){ jQuery('#keywords').slideToggle()  })(){/literal}" value="予約キーワード表示"/>
 <input type=button onclick="{literal}(function(){ jQuery('#this_week').slideToggle()  })(){/literal}" value="カレンダー(今週)"/>
 <div id=keywords style="display:none;">
@@ -170,26 +195,6 @@ table#reservation_table tr.ctg_10, #category_select a.ctg_10 {background-color: 
 <div style="display:inline-block;font-size:20px;"><a href="./recordedTable.php?do_search=1&date={$date.date}">{$date.day}({$date.dw})</a></div>  |  
 {/foreach}
 </div>
-
-<div>
-絞り込み：
-<form method="get" action="recordedTable.php" >
-<input type="hidden" name="do_search" value="1" />
-<!--TODO ::この条件に日付を追加する -->
-検索語句<input type="text" size="20" name="search" value="{$search}" />
-局<select name="station">
-  {foreach from=$stations item=st}
-    <option value="{$st.id}" {$st.selected}>{$st.name}</option>
-  {/foreach}
-  </select>
-カテゴリ<select name="category_id">
-  {foreach from=$cats item=cat}
-  <option value="{$cat.id}" {$cat.selected}>{$cat.name}</option>
-  {/foreach}
-</select>
-<input type="text" value="{$_date}" name="date" size=12/>
-<input type="submit" value="絞り込む" />
-</form>
 </div>
 
 タイトルや内容をクリックすると視聴できます（ブラウザの設定でASFとVLCを関連付けている必要があります）
@@ -198,6 +203,14 @@ table#reservation_table tr.ctg_10, #category_select a.ctg_10 {background-color: 
 
 {if count($records)}
 <table id="reservation_table">
+ <tr>
+  <th style="white-space: nowrap;"><a href="{$prev_link}">{$prev_link_name}</a></th>
+  <td></td>
+  <td>{$current_name}</td>
+  <td></td>
+  <td></td>
+  <th style="white-space: nowrap;"><a href="{$next_link}">{$next_link_name}</a> </th>
+ </tr>
  <tr>
   <th>録画日時</th>
   <!--<th>ch</th>-->
@@ -227,6 +240,15 @@ table#reservation_table tr.ctg_10, #category_select a.ctg_10 {background-color: 
 
 {else}
   現在、録画済データはありません
+<table id="reservation_table">
+ <tr>
+  <th style="white-space: nowrap;"><a href="{$prev_link}">{$prev_link_name}</a></th>
+  <td></td>
+  <td>{$current_name}</td>
+  <td></td>
+  <td></td>
+  <th style="white-space: nowrap;"><a href="{$next_link}">{$next_link_name}</a> </th>
+  </table>
 {/if}
 
 <div id="floatBox4Dialog">jQuery UI Dialog</div>
