@@ -3,3 +3,5 @@ settings/*
 .hg/*
 templates_c/*.php
 cache/*
+thumbs/*
+video/*
